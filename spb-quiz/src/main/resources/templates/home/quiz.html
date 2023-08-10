@@ -63,19 +63,15 @@
                     let randomAnswer = shuffle(qS);
                     randomAnswer.forEach(answer => {
                         if (question.type === "single") {
-                            ans += ` <div class="form-check">
+                            ans += ` <div>
               <input class="form-check-input" value="${answer.title}" type="radio" name="ques-${question.id}" id="answer-${answer.id}">
-              <label class="form-check-label" for="flexRadioDefault1">
-                  ${answer.content}
-              </label>
-          </div>`
+              <label class="form-check-label" for="flexRadioDefault1">${answer.content}</label>
+                                    </div>`
                         } else {
-                            ans += ` <div class="form-check">
+                            ans += ` <div>
               <input class="form-check-input" value="${answer.title}" type="checkbox" name="ques-${question.id}" id="answer-${answer.id}">
-              <label class="form-check-label" for="flexRadioDefault1">
-                  ${answer.content}
-              </label>
-          </div>`
+              <label class="form-check-label" for="flexRadioDefault1">${answer.content} </label>
+                                     </div>`
                         }
                     })
                     ques += ` <h5>${index + 1}.${question.content}</h5>
