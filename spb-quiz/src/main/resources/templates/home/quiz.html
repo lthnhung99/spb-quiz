@@ -31,25 +31,37 @@
 <script src="/assets/js/jquery-3.7.0.min.js"></script>
 <script>
     let questions;
+    let getQuizz = () => {
+        return $.ajax({
+            url: 'http://localhost:28001/api/quiz',
+            type: "GET"
+        })
+    }
+
+    function shuffle(arra1) {
+        var ctr = arra1.length, temp, index;
+        while (ctr > 0) {
+            index = Math.floor(Math.random() * ctr);
+            ctr--;
+            temp = arra1[ctr];
+            arra1[ctr] = arra1[index];
+            arra1[index] = temp;
+        }
+        return arra1;
+    }
 
     function renderQuiz() {
-        $.ajax({
-            url: 'http://localhost:28001/api/quiz',
-            type: "GET",
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-        }).done(data => {
+        getQuizz().then((data) => {
             let str = '';
             data.forEach(quiz => {
                 questions = quiz.questions;// Lưu danh sách câu hỏi cho việc kiểm tra
                 let ques = '';
                 //duyệt qua danh sách các câu hỏi và tạo giao diện cho chúng,
-                // bao gồm cả các lựa chọn đáp án dưới dạng các input radio hoặc checkbox.
-                quiz.questions.forEach((question, index) => {
+                questions.forEach((question, index) => {
                     let ans = '';
-                    question.answers.forEach(answer => {
+                    let qS = question.answers;
+                    let randomAnswer = shuffle(qS);
+                    randomAnswer.forEach(answer => {
                         if (question.type === "single") {
                             ans += ` <div class="form-check">
               <input class="form-check-input" value="${answer.title}" type="radio" name="ques-${question.id}" id="answer-${answer.id}">
@@ -78,11 +90,9 @@
             })
             document.getElementById('quiz').innerHTML = str;
         })
-
     }
 
     renderQuiz();
-
     function submit() {
         let values = [];//Mảng để lưu các câu trả lời của người dùng
         let isFull = true;//Biến để kiểm tra xem tất cả câu hỏi đã được trả lời chưa
