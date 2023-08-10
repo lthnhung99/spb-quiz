@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/assets/bootstrap/v5.3.0/css/bootstrap.min.css">
+    <style>
+        h1 {
+            color: #0a53be;
+        }
+
+        body {
+            background-color: #c7dbd2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container d-flex ">
+    <div id="quiz" class="container-fluid col-9">
+
+    </div>
+
+</div>
+<div class="text-center">
+    <button onclick="submit()" type="submit" class="btn btn-primary">Nộp bài</button>
+</div>
+
+</body>
+<script src="/assets/js/jquery-3.7.0.min.js"></script>
+<script>
+    let questions;
+
+    function renderQuiz() {
+        $.ajax({
+            url: 'http://localhost:28001/api/quiz',
+            type: "GET",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+        }).done(data => {
+            let str = '';
+            data.forEach(quiz => {
+                questions = quiz.questions;// Lưu danh sách câu hỏi cho việc kiểm tra
+                let ques = '';
+                //duyệt qua danh sách các câu hỏi và tạo giao diện cho chúng,
+                // bao gồm cả các lựa chọn đáp án dưới dạng các input radio hoặc checkbox.
+                quiz.questions.forEach((question, index) => {
+                    let ans = '';
+                    question.answers.forEach(answer => {
+                        if (question.type === "single") {
+                            ans += ` <div class="form-check">
+              <input class="form-check-input" value="${answer.title}" type="radio" name="ques-${question.id}" id="answer-${answer.id}">
+              <label class="form-check-label" for="flexRadioDefault1">
+                  ${answer.content}
+              </label>
+          </div>`
+                        } else {
+                            ans += ` <div class="form-check">
+              <input class="form-check-input" value="${answer.title}" type="checkbox" name="ques-${question.id}" id="answer-${answer.id}">
+              <label class="form-check-label" for="flexRadioDefault1">
+                  ${answer.content}
+              </label>
+          </div>`
+                        }
+                    })
+                    ques += ` <h5>${index + 1}.${question.content}</h5>
+            ${ans}
+          `
+                })
+                str += ` <h1 class="text-center">${quiz.content}</h1>
+            <div id="">
+                <div id="question"> ${ques}
+                </div>
+            </div>`
+            })
+            document.getElementById('quiz').innerHTML = str;
+        })
+
+    }
+
+    renderQuiz();
+
+    function submit() {
+        let values = [];//Mảng để lưu các câu trả lời của người dùng
+        let isFull = true;//Biến để kiểm tra xem tất cả câu hỏi đã được trả lời chưa
+        for (let i = 1; i <= questions.length; i++) {
+            let inputName = "ques-" + i;
+            //Tìm tất cả các input có tên là inputName và đã được chọn
+            let inputElement = document.querySelectorAll('input[name="' + inputName + '"]:checked');
+
+            if (inputElement.length <= 0) {
+                isFull = false;// Nếu có bất kỳ câu hỏi nào chưa được trả lời, đặt biến isFull thành false
+                break;  // Dừng vòng lặp, không cần kiểm tra tiếp
+            } else {
+                let answers = {};// Đối tượng để lưu trữ câu trả lời cho mỗi câu hỏi
+                let checkAns = [];//Mảng để lưu các câu trả lời của checkbox
+                if (inputElement[0].type === "radio") {
+                    valueInput = inputElement[0].value;// Giá trị của câu trả lời
+                    answers.answer = valueInput;
+                    answers.type = "radio"
+                    values.push(answers); // Thêm đối tượng câu trả lời vào mảng
+                } else {
+                    inputElement.forEach(function (checkbox) {
+                        checkAns.push(checkbox.value); // Thêm các giá trị của checkbox đã chọn vào mảng checkAns
+                    });
+                    answers.answer = checkAns;
+                    answers.type = "checkbox"
+                    values.push(answers);
+                }
+            }
+        }
+        if (!isFull) {
+            alert("Bạn phải hoàn thành tất cả các câu hỏi. Không được bỏ qua câu nào")
+        } else {
+            alert("Bạn đã đúng " + checkAnswer(values) + "/" + questions.length + " câu")
+        }
+    }
+
+    function checkAnswer(value) {
+        let count = 0;// Biến đếm câu trả lời không đúng cho checkbox
+        let score = 0;// Điểm câu trả lời đúng
+
+        for (let i = 0; i < questions.length; i++) {
+            if (value[i].type === "radio") {
+                for (let j = 0; j < questions[i].answers.length; j++) {
+                    // Kiểm tra xem câu trả lời của người dùng có trùng khớp với câu trả lời đúng và có status true không
+                    if (questions[i].answers[j].title === value[i].answer && questions[i].answers[j].status === true)
+                        score++;
+                }
+            } else if (value[i].type === "checkbox") {
+                for (let j = 0; j < questions[i].answers.length; j++) {
+                    for (let k = 0; k < questions[i].answers.length; k++) {
+                        if (questions[i].answers[j].title === value[i].answer[k] && questions[i].answers[j].status === false) {
+                            count++;
+                        }
+                    }
+                }
+                if (count === 0) {
+                    score++;
+                }
+                count = 0;
+            }
+        }
+        return score;
+    }
+
+</script>
+</html>
+
